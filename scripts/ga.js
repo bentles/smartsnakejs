@@ -1,6 +1,7 @@
 var rnorm = require('./helpers.js');
 var FFNN_builder = require('./ffnn.js');
 var snake_game_builder = require('./game.js');
+var Logger = require('./logger.js');
 
 function GA_builder(pop_size, tourn_percent, std_dev, mutate_chance) {
     var vision = 2;
@@ -49,7 +50,7 @@ function GA_builder(pop_size, tourn_percent, std_dev, mutate_chance) {
 
                 max_fit = fitnesses[i];
                 max_fit_chromo = chromosomes[i];
-                console.log("NEW MAX FITNESS! " + fitnesses[i]);
+                Logger.log("NEW MAX FITNESS! " + fitnesses[i]);
                 new_max = true;
             }
         }
@@ -134,7 +135,7 @@ function GA_builder(pop_size, tourn_percent, std_dev, mutate_chance) {
 
         while(next_gen() && iter--) {
             if (iter % 100 == 0) {
-                console.log("NEW GEN (" + (totalgens - iter)  + "): " + max_fit);
+                Logger.log("NEW GEN (" + (totalgens - iter)  + "): " + max_fit);
             }
         }
         return max_fit_chromo;
