@@ -1,3 +1,5 @@
+//var Logger = require('./logger.js');
+
 function snake_game_builder(width, height, start_length, vision, nnet) {
     //direction consts
     var N = 0;
@@ -35,7 +37,7 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
 
     var board = [];
     var snake = [];
-    var apple_pos ;
+    var apple_pos;
     var direction = N;
     var score = 0;
     var lived = 0;
@@ -129,8 +131,6 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
             collidables.push(left_block);
             collidables.push(right_block);
         }
-
-	//console.log(collidables);
         return collidables;
     }
 
@@ -340,14 +340,14 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
                 }
                 line += char;
             }
-            console.log(line);
+            //Logger.log(line);
         }
-        console.log("SCORE: " + score);
-        console.log(snakemem);
+        //Logger.log("SCORE: " + score);
+       // Logger.log(snakemem);
     }
 
     function clear() {
-        process.stdout.write('\u001B[2J\u001B[0;0f');
+       // Logger.clear();
     }
 
     //will probably break if snake is massive, will have to reimplement then
@@ -373,7 +373,7 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
         //stop game if snake dies
         if (done) {
         clearInterval(interval_id);
-            console.log('GAME OVER');
+            //Logger.log('GAME OVER');
         }
     }
 
