@@ -1,6 +1,7 @@
 var rnorm = require('./helpers.js');
 var FFNN_builder = require('./ffnn.js');
 var snake_game_builder = require('./game.js');
+var Logger = require('./logger.js');
 
 
 module.exports = function (self) {

@@ -127,6 +127,7 @@ module.exports = FFNN_builder;
 var rnorm = require('./helpers.js');
 var FFNN_builder = require('./ffnn.js');
 var snake_game_builder = require('./game.js');
+var Logger = require('./logger.js');
 
 
 module.exports = function (self) {
@@ -288,7 +289,7 @@ module.exports = function (self) {
     }    
 };
 
-},{"./ffnn.js":1,"./game.js":3,"./helpers.js":4}],3:[function(require,module,exports){
+},{"./ffnn.js":1,"./game.js":3,"./helpers.js":4,"./logger.js":5}],3:[function(require,module,exports){
 //var Logger = require('./logger.js');
 
 function snake_game_builder(width, height, start_length, vision, nnet) {
