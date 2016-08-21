@@ -11,8 +11,8 @@ p {
     top : 0;
     left : 0;
     bottom : 0;
-    right: 20%;
-    background-color: #aaaaaa;
+    right: 80%;
+    background-color: #EEEEEE;
     overflow-y: scroll;
 }
 
@@ -22,7 +22,6 @@ p {
     left : 20%;
     bottom : 0;
     right: 0;
-    background-color: #99BB99;
 }
 
 .smartsnake-square {
