@@ -26,7 +26,7 @@ gaWorker.addEventListener('message', function (ev) {
 //start up the ga with the following arguments
 gaWorker.postMessage(
     {
-        iter: 1000
+        iter: 10000
     });
 
 //console.log(chromo);
