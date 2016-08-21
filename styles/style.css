@@ -11,7 +11,7 @@ p {
     top : 0;
     left : 0;
     bottom : 0;
-    right: 30%;
+    right: 20%;
     background-color: #aaaaaa;
     overflow-y: scroll;
 }
@@ -19,8 +19,43 @@ p {
 #smartsnake-gameplay {
     position: fixed;
     top : 0;
-    left : 30%;
+    left : 20%;
     bottom : 0;
     right: 0;
     background-color: #99BB99;
+}
+
+.smartsnake-square {
+    margin: 1px;
+    border-radius: 5px;
+    display: block;
+    float: left;
+    width: 30px;
+    height: 30px;
+}
+
+.smartsnake-row {
+    width: 100%;
+    display: block;
+    float: left;
+}
+
+#dot {
+    background-color: #E3E7E8;
+}
+
+#W {
+    background-color: #535E61;
+}
+
+#S {
+    background-color: #5FBD57;
+}
+
+#A {
+    background-color: #F74343;
+}
+
+#X {
+    background-color: #356E30;
 }

@@ -1,11 +1,16 @@
-function logger(id) {
+function logger(id, isHTML) {
     var outputElem = document.getElementById(id);
 
     return {
         log : function(message, onclick) {
+            if (isHTML) {
+                outputElem.insertAdjacentHTML('beforeend', message);
+                return;
+            }
+            
             var elem = document.createElement('p');
             elem.id = 'smartsnake-message';
-            elem.textContent = message;
+            elem.innerHTML = message;
             if (onclick){
                 elem.style.cursor = 'pointer';
                 elem.onclick = onclick;                

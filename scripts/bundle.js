@@ -24,7 +24,7 @@ module.exports = (function() {
     };
 
     var game = {
-        width: 20,
+        width: 15,
         height: 10
     };
 
@@ -780,14 +780,19 @@ function rnorm(mean, stdev) {
 module.exports = rnorm;
 
 },{}],7:[function(require,module,exports){
-function logger(id) {
+function logger(id, isHTML) {
     var outputElem = document.getElementById(id);
 
     return {
         log : function(message, onclick) {
+            if (isHTML) {
+                outputElem.insertAdjacentHTML('beforeend', message);
+                return;
+            }
+            
             var elem = document.createElement('p');
             elem.id = 'smartsnake-message';
-            elem.textContent = message;
+            elem.innerHTML = message;
             if (onclick){
                 elem.style.cursor = 'pointer';
                 elem.onclick = onclick;                
@@ -849,24 +854,24 @@ function playGame(chromo) {
 
 },{"./ffnn.js":3,"./ga.js":4,"./game.js":5,"./logger.js":7,"./prettyprint.js":9,"webworkify":10}],9:[function(require,module,exports){
 var consts = require('./consts.js');
-var logger = require('./logger.js')('smartsnake-gameplay');
+var logger = require('./logger.js')('smartsnake-gameplay', true);
 
 module.exports = function createPrettyPrinter() {
     var map_tokens = {};
     var entity_tokens = {};
-    map_tokens[consts.EMPTY] =".";
-    map_tokens[consts.WALL] = "W";
+    map_tokens[consts.EMPTY] ='<div class="smartsnake-square" id="dot"></div>';
+    map_tokens[consts.WALL] = '<div class="smartsnake-square" id="W"></div>';
 
-    entity_tokens[consts.SNAKE] ="S";
-    entity_tokens[consts.APPLE] ="A";
-    entity_tokens[consts.DEAD] ="X";
+    entity_tokens[consts.SNAKE] ='<div class="smartsnake-square" id="S"></div>';
+    entity_tokens[consts.APPLE] ='<div class="smartsnake-square" id="A"></div>';
+    entity_tokens[consts.DEAD] ='<div class="smartsnake-square" id="X"></div>';
 
 
     function prettyPrint(height, width, board_get, get_entity, score)
     {
         clear();
         for(var j = 0; j < height; j++) {
-            var line = "";
+            var line = '<div class="smartsnake-row">';
             for(var i = 0; i < width; i++) {
                 var char = map_tokens[board_get(i,j)];
                 if (get_entity(i,j) !== consts.NONE ) {
@@ -874,6 +879,7 @@ module.exports = function createPrettyPrinter() {
                 }
                 line += char;
             }
+            line += '</div>';
             logger.log(line);
         }
         logger.log('SCORE: ' + score);
@@ -884,7 +890,7 @@ module.exports = function createPrettyPrinter() {
     }
 
     function gameOver() {
-        logger.log('GAME OVER');
+        logger.log('<br /> GAME OVER');
     }
 
     return { prettyPrint, clear, gameOver };

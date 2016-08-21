@@ -23,7 +23,7 @@ module.exports = (function() {
     };
 
     var game = {
-        width: 20,
+        width: 15,
         height: 10
     };
 
