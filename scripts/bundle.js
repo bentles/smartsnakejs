@@ -1,7 +1,65 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-function FFNN_builder(num_in,
-              num_hidden, hidden_func,
-                      num_out, out_func) {
+module.exports = (function() {
+    var snake = {
+        vision : 2,
+        smell : 1,
+        start_length : 3
+    };
+
+    //the composition of the network is dependant on the snake's morphology
+    var ffnn = {
+        num_in : snake.vision * 12 + 4 * snake.smell,
+        num_hidden : 6,
+        hidden_func : net => net,
+        num_out : 3,
+        out_func : net => net        
+    };
+
+    var ga = {
+        pop_size: 20,
+        tourn_percent: 0.5,
+        std_dev: 2.5,
+        mutate_chance: 0.01,
+        iter: 5        
+    };
+
+    var game = {
+        width: 20,
+        height: 10
+    };
+
+    return { snake, ffnn, ga, game };
+})();
+
+},{}],2:[function(require,module,exports){
+module.exports = {
+    //direction consts
+    N : 0,
+    E : 1,
+    S : 2,
+    W : 3,
+
+    //map constants
+    WALL : -1,
+    EMPTY : 0,
+
+    //entity consts
+    SNAKE : -2,
+    APPLE : 1,
+    NONE : 0,
+    DEAD : 666 //used to record when a snake hits itself    
+};
+
+},{}],3:[function(require,module,exports){
+var _ffnn = require('./config.js').ffnn;
+
+function FFNN_builder() {
+    var num_in = _ffnn.num_in;
+    var num_hidden = _ffnn.num_hidden;
+    var hidden_func = _ffnn.hidden_func;
+    var num_out = _ffnn.num_out;
+    var out_func = _ffnn.out_func;
+    
     var inputs = [];
     var hidden_neurons = [];
     var out_neurons = [];
@@ -123,28 +181,28 @@ function FFNN_builder(num_in,
 
 module.exports = FFNN_builder;
 
-},{}],2:[function(require,module,exports){
+},{"./config.js":1}],4:[function(require,module,exports){
 var rnorm = require('./helpers.js');
-var FFNN_builder = require('./ffnn.js');
+
 var snake_game_builder = require('./game.js');
+var config = require('./config.js');
+var _ga = config.ga;
 
 module.exports = function (self) {
     self.addEventListener('message',function (ev){
         var options = ev.data;
-        var ga = GA_builder(options.pop_size,
-                            options.tourn_percent,
-                            options.std_dev,
-                            options.mutate_chance);
+        var ga = GA_builder();
         ga.evolve(options.iter);        
     });
 
-
-    function GA_builder(pop_size, tourn_percent, std_dev, mutate_chance) {
-        var vision = 2;
-        var nnet = FFNN_builder( /*5 * 3*/ 12 * vision + 4,
-            6, function(net){return net;},
-            3, function(net){return net;});
-        var game = snake_game_builder(20, 10, 3, vision, nnet);
+    function GA_builder() {
+        var pop_size =      _ga.pop_size;
+        var tourn_percent = _ga.tourn_percent;
+        var std_dev =       _ga.std_dev;
+        var mutate_chance = _ga.mutate_chance;
+        
+        var game = snake_game_builder();
+        var nnet = game.getNetwork();
         var chromosomes = [];
         var max_fit = -Number.MAX_VALUE;
         var max_fit_chromo = [];
@@ -170,8 +228,7 @@ module.exports = function (self) {
 
             for(var i = 0; i < chromosomes.length; i++) {
                 nnet.set(chromosomes[i]);
-
-
+                
                 var score = 0;
 
                 var num_runs = 5;
@@ -186,7 +243,10 @@ module.exports = function (self) {
 
                     max_fit = fitnesses[i];
                     max_fit_chromo = chromosomes[i];
-                    self.postMessage("NEW MAX FITNESS! " + fitnesses[i]);
+                    self.postMessage({
+                        message: "NEW MAX FITNESS! " + fitnesses[i],
+                        chromo: max_fit_chromo.slice() //send back info for the UI
+                    });
                     new_max = true;
                 }
             }
@@ -271,7 +331,10 @@ module.exports = function (self) {
 
             while(next_gen() && iter--) {
                 if (iter % 100 == 0) {
-                    self.postMessage("NEW GEN (" + (totalgens - iter)  + "): " + max_fit);
+                    self.postMessage(
+                        {
+                            message:  "NEW GEN (" + (totalgens - iter)  + "): " + max_fit
+                        });
                 }
             }
             return max_fit_chromo;
@@ -287,51 +350,34 @@ module.exports = function (self) {
     }    
 };
 
-},{"./ffnn.js":1,"./game.js":3,"./helpers.js":4}],3:[function(require,module,exports){
-//var Logger = require('./logger.js');
+},{"./config.js":1,"./game.js":5,"./helpers.js":6}],5:[function(require,module,exports){
+var consts = require('./consts.js');
+var config = require('./config.js');
+var nnet_builder = require('./ffnn.js');
 
-function snake_game_builder(width, height, start_length, vision, nnet) {
-    //direction consts
-    var N = 0;
-    var E = 1;
-    var S = 2;
-    var W = 3;
+var _snake = config.snake;
+var _game = config.game;
 
-    //map constants
-    var WALL = -1;
-    var EMPTY = 0;
-
-    //entity consts
-    var SNAKE = -2;
-    var APPLE = 1;
-    var NONE = 0;
-    var DEAD = 666; //used to record when a snake hits itself
-
+function snakeGameBuilder() {
     //timer
+    var pretty_printer;
     var interval_id;
 
+    var nnet = nnet_builder(config.ffnn);
+    
     //death 0.6
-    var DEATH = 0.55;
+    var DEATH = 0.4;
 
     //eyesight
-    var SNAKEVISION = vision;
-
-    var map_tokens = {};
-    map_tokens[EMPTY] =".";
-    map_tokens[WALL] = "W";
-
-    var entity_tokens = {};
-    entity_tokens[SNAKE] ="S";
-    entity_tokens[APPLE] ="A";
-    entity_tokens[DEAD] ="X";
+    var SNAKEVISION = _snake.vision;
 
     var board = [];
     var snake = [];
     var apple_pos;
-    var direction = N;
+    var direction = consts.N;
     var score = 0;
     var lived = 0;
-    var HP = width*height*DEATH;
+    var HP = _game.width * _game.height * DEATH;
     var time = 0;
 
     //snake can remember the last 5 things it did
@@ -341,51 +387,51 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
     var entity_map = {};
 
     function board_set(x, y, value) {
-        board[x + y*width] = value;
+        board[x + y * _game.width] = value;
     }
 
     function board_get(x, y, value) {
-        if (x < 0 || x >= width || y >= height || y < 0)
-            return WALL;
+        if (x < 0 || x >= _game.width || y >= _game.height || y < 0)
+            return consts.WALL;
         else {
-            return board[x + y*width];
+            return board[x + y * _game.width];
         }
     }
 
     function build_board() {
         //make some borders around the edge
-        for(var i = 0; i < width; i++) {
-            for(var j = 0; j < height; j++) {
-                if (i === 0 || i === (width - 1) || j === 0 || j === (height - 1)) {
-                    board_set(i, j, WALL);
+        for(var i = 0; i < _game.width; i++) {
+            for(var j = 0; j < _game.height; j++) {
+                if (i === 0 || i === (_game.width - 1) || j === 0 || j === (_game.height - 1)) {
+                    board_set(i, j, consts.WALL);
                 }
                 else {
-                    board_set(i, j , EMPTY);
+                    board_set(i, j , consts.EMPTY);
                 }
             }
         }
     }
 
     function get_id(x,y) {
-        return x + y*width;
+        return x + y * _game.width;
     }
 
     //assume snake length isn't stupidly long
     function build_snake() {
-        var start_pos = {x:Math.floor(width/2), y:Math.floor(height/2)};
+        var start_pos = {x:Math.floor(_game.width/2), y:Math.floor(_game.height/2)};
 
-        for(var i = 0; i < start_length; i++) {
-            snake[i] = {x:start_pos.x,y:start_pos.y + i};
-            entity_map[get_id(snake[i].x, snake[i].y)] = SNAKE;
+        for(var i = 0; i < _snake.start_length; i++) {
+            snake[i] = { x:start_pos.x, y:start_pos.y + i };
+            entity_map[get_id(snake[i].x, snake[i].y)] = consts.SNAKE;
         }
     }
 
     function is_snake(x, y) {
-        return entity_map[get_id(x,y)] === SNAKE;
+        return entity_map[get_id(x,y)] === consts.SNAKE;
     }
 
     function get_entity(x, y) {
-        return entity_map[get_id(x,y)] || NONE;
+        return entity_map[get_id(x,y)] || consts.NONE;
     }
 
     //returns the blocks in lines of distance length to the left right
@@ -393,13 +439,13 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
     function get_collidible_neighbours(distance) {
         distance = distance || 1;
 
-        var forward = {x:0, y:0};
+        var forward = { x : 0, y : 0 };
 
-        if (direction == N)
+        if (direction == consts.N)
             forward.y = -1;
-        else if (direction == S)
+        else if (direction == consts.S)
             forward.y = 1;
-        else if (direction == E)
+        else if (direction == consts.E)
             forward.x = 1;
         else
             forward.x = -1;
@@ -462,7 +508,7 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
         var offset = next_pos_offset();
 
         //add an extra snakey to where the end will be if there's an apple
-        var grew = entity_map[get_id(snake[0].x + offset.x, snake[0].y + offset.y)] === APPLE ;
+        var grew = entity_map[get_id(snake[0].x + offset.x, snake[0].y + offset.y)] === consts.APPLE ;
         var old_length = snake.length;
         var tail = snake[snake.length - 1];
         if (grew) {
@@ -490,10 +536,10 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
 
         //move the head of the snake
         if (is_snake(head_new_x, head_new_y)) {
-            entity_map[get_id(head_new_x, head_new_y)] = DEAD;
+            entity_map[get_id(head_new_x, head_new_y)] = consts.DEAD;
         }
         else {
-            entity_map[get_id(head_new_x, head_new_y)] = SNAKE;
+            entity_map[get_id(head_new_x, head_new_y)] = consts.SNAKE;
         }
 
         snake[0].x = head_new_x;
@@ -505,11 +551,11 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
     {
         var offset = {x:0, y:0};
 
-        if (direction == N)
+        if (direction == consts.N)
             offset.y--;
-        else if (direction == S)
+        else if (direction == consts.S)
             offset.y++;
-        else if (direction == E)
+        else if (direction == consts.E)
             offset.x++;
         else
             offset.x--;
@@ -523,12 +569,12 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
             return true;
 
         //hit self
-        return get_entity(snake[0].x, snake[0].y) === DEAD;
+        return get_entity(snake[0].x, snake[0].y) === consts.DEAD;
     }
 
     function inc_score() {
         score += 100;
-        lived += (DEATH * width * height) - HP;
+        lived += (DEATH * _game.width * _game.height) - HP;
     }
 
     function get_input()
@@ -540,13 +586,13 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
         for(var i = 0; i < neighbours.length; i++) {
             var k = i * 4;
             //nothing
-            inputs[k] = neighbours[i] == NONE ? 1 : 0;
+            inputs[k] = neighbours[i] == consts.NONE ? 1 : 0;
             //apple
-            inputs[k + 1] = neighbours[i] == APPLE ? 1 : 0;
+            inputs[k + 1] = neighbours[i] == consts.APPLE ? 1 : 0;
             //wall
-            inputs[k + 2] = neighbours[i] == WALL ? 1 : 0;
+            inputs[k + 2] = neighbours[i] == consts.WALL ? 1 : 0;
             //self
-            inputs[k + 3] = neighbours[i] == SNAKE ? 1 : 0;
+            inputs[k + 3] = neighbours[i] == consts.SNAKE ? 1 : 0;
         }
 
         //inputs = inputs.concat(snakemem/*.slice(6, 15)*/);
@@ -559,11 +605,11 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
         var ay = apple_pos[1];
         var rel_apple_pos = [0,0,0,0];
 
-        if (direction === N)
+        if (direction === consts.N)
             rel_apple_pos = [ ax - sx, ay - sy, 0, 0];
-        else if (direction === S)
+        else if (direction === consts.S)
             rel_apple_pos = [ ay - sy, -(ax - sx), 0, 0];
-        else if (direction === W)
+        else if (direction === consts.W)
             rel_apple_pos = [ -(ay - sy), ax - sx, 0, 0 ];
         else
             rel_apple_pos = [ -(ax - sx), -(ay - sy), 0, 0];
@@ -611,45 +657,25 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
         if(grew) {
             inc_score();
             apple_pos = add_apple();
-            HP = width * height * DEATH;
+            HP = _game.width * _game.height * DEATH;
         }
         HP--;
         time++;
         return HP <= 0 ? true : is_dead();
     }
 
-    function pretty_print()
-    {
-        clear();
-        for(var j = 0; j < height; j++) {
-            var line = "";
-            for(var i = 0; i < width; i++) {
-                var char = map_tokens[board_get(i,j)];
-                if (get_entity(i,j) !== NONE ) {
-                    char = entity_tokens[get_entity(i,j)];
-                }
-                line += char;
-            }
-            //Logger.log(line);
-        }
-        //Logger.log("SCORE: " + score);
-       // Logger.log(snakemem);
-    }
-
-    function clear() {
-       // Logger.clear();
-    }
+  
 
     //will probably break if snake is massive, will have to reimplement then
     function add_apple() {
-        var size = width*height;
+        var size = _game.width*_game.height;
 
         while(true) {
             var pos = Math.floor(Math.random()*size);
-            var x = pos % width;
-            var y = Math.floor(pos / width);
-            if (!is_snake(x, y) && (board_get(x, y) === EMPTY)) {
-                entity_map[pos] = APPLE;
+            var x = pos % _game.width;
+            var y = Math.floor(pos / _game.width);
+            if (!is_snake(x, y) && (board_get(x, y) === consts.EMPTY)) {
+                entity_map[pos] = consts.APPLE;
                 break; //stop trying - found a valid spot for an apple
             }
         }
@@ -659,11 +685,11 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
 
     function game() {
         var done = !game_loop();
-        pretty_print();
+        pretty_printer.prettyPrint(_game.height, _game.width, board_get, get_entity, score);
         //stop game if snake dies
         if (done) {
         clearInterval(interval_id);
-            //Logger.log('GAME OVER');
+            pretty_printer.gameOver();
         }
     }
 
@@ -672,13 +698,22 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
         return !end;
     }
 
-    function play(milliseconds) {
+    function play(milliseconds, pretty) {
+        if (interval_id)
+            stop();
+        
+        
+        pretty_printer = pretty;
         init();
         interval_id = setInterval(game, milliseconds);
     }
 
+    function stop() {
+        clearInterval(interval_id);
+    }
+
     function run()
-    {
+    {      
         init();
         while(game_loop()){}
         return score; ///time; //+ time; //time is constrained
@@ -688,10 +723,10 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
     {
         board = [];
         snake = [];
-        direction = N;
+        direction = consts.N;
         score = 0;
         lived = 0;
-        HP = width*height*DEATH;
+        HP = _game.width * _game.height * DEATH;
         time = 0;
         entity_map = {};
         snakemem = [0,1,0,0,1,0,0,1,0,0,1,0,0,1,0];
@@ -702,12 +737,16 @@ function snake_game_builder(width, height, start_length, vision, nnet) {
         apple_pos = add_apple();
     }
 
-    return {play:play, run:run} ;
+    function getNetwork() {
+        return nnet;
+    }
+
+    return { play, run, getNetwork } ;
 }
 
-module.exports = snake_game_builder;
+module.exports = snakeGameBuilder;
 
-},{}],4:[function(require,module,exports){
+},{"./config.js":1,"./consts.js":2,"./ffnn.js":3}],6:[function(require,module,exports){
 // Generate normally-distributed random nubmers
 // Algorithm adapted from:
 // http://c-faq.com/lib/gaussian.html
@@ -740,14 +779,21 @@ function rnorm(mean, stdev) {
 
 module.exports = rnorm;
 
-},{}],5:[function(require,module,exports){
-function logger() {
-    var outputElem = document.getElementById("smartsnake-output");
+},{}],7:[function(require,module,exports){
+function logger(id) {
+    var outputElem = document.getElementById(id);
 
     return {
-        log : function(message) {
-            outputElem.
-                insertAdjacentHTML("beforeend", `<p id="smartsnake-message">${message}</p>`);
+        log : function(message, onclick) {
+            var elem = document.createElement('p');
+            elem.id = 'smartsnake-message';
+            elem.textContent = message;
+            if (onclick){
+                elem.style.cursor = 'pointer';
+                elem.onclick = onclick;                
+            }
+
+            outputElem.appendChild(elem);
         },
         clear : function() {
             while (outputElem.firstChild) {
@@ -757,9 +803,9 @@ function logger() {
     };
 }
 
-module.exports = logger();
+module.exports = logger;
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 //var GA_builder = require('./ga.js');
 
 //best results so far are from: 20 0.5 2.5 0.01
@@ -767,28 +813,84 @@ module.exports = logger();
 //var chromo = ga.evolve(500);
 
 var work = require('webworkify');
+var gameBuilder = require('./game.js');
 var gaWorker = work(require('./ga.js'));
-var logger = require('./logger.js');
+var FfnnBuilder = require('./ffnn.js');
+var loggerBuilder = require('./logger.js');
+var logger = loggerBuilder('smartsnake-output');
+var prettyPrinterBuilder = require('./prettyprint.js');
+var best_chromo;
+
+//things to use to play back the results we get
+var game = gameBuilder();
+var nnet = game.getNetwork();
 
 gaWorker.addEventListener('message', function (ev) {
-    logger.log(ev.data);
+    logger.log(ev.data.message, function() {
+        playGame(ev.data.chromo);
+    });    
 });
-
 
 //start up the ga with the following arguments
 gaWorker.postMessage(
     {
-        pop_size: 20,
-        tourn_percent: 0.5,
-        std_dev: 2.5,
-        mutate_chance: 0.01,
-        iter: 500
+        iter: 1000
     });
 
 //console.log(chromo);
-//ga.play_best(50);
 
-},{"./ga.js":2,"./logger.js":5,"webworkify":7}],7:[function(require,module,exports){
+
+function playGame(chromo) { 
+    nnet.set(chromo);
+    game.play(100, prettyPrinterBuilder());   
+}
+
+
+
+},{"./ffnn.js":3,"./ga.js":4,"./game.js":5,"./logger.js":7,"./prettyprint.js":9,"webworkify":10}],9:[function(require,module,exports){
+var consts = require('./consts.js');
+var logger = require('./logger.js')('smartsnake-gameplay');
+
+module.exports = function createPrettyPrinter() {
+    var map_tokens = {};
+    var entity_tokens = {};
+    map_tokens[consts.EMPTY] =".";
+    map_tokens[consts.WALL] = "W";
+
+    entity_tokens[consts.SNAKE] ="S";
+    entity_tokens[consts.APPLE] ="A";
+    entity_tokens[consts.DEAD] ="X";
+
+
+    function prettyPrint(height, width, board_get, get_entity, score)
+    {
+        clear();
+        for(var j = 0; j < height; j++) {
+            var line = "";
+            for(var i = 0; i < width; i++) {
+                var char = map_tokens[board_get(i,j)];
+                if (get_entity(i,j) !== consts.NONE ) {
+                    char = entity_tokens[get_entity(i,j)];
+                }
+                line += char;
+            }
+            logger.log(line);
+        }
+        logger.log('SCORE: ' + score);
+    }
+
+    function clear() {
+        logger.clear();
+    }
+
+    function gameOver() {
+        logger.log('GAME OVER');
+    }
+
+    return { prettyPrint, clear, gameOver };
+};
+
+},{"./consts.js":2,"./logger.js":7}],10:[function(require,module,exports){
 var bundleFn = arguments[3];
 var sources = arguments[4];
 var cache = arguments[5];
@@ -857,4 +959,4 @@ module.exports = function (fn, options) {
     return worker;
 };
 
-},{}]},{},[1,2,3,4,6,5]);
+},{}]},{},[3,4,5,6,8,7,1,2,9]);

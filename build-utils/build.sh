@@ -9,4 +9,7 @@ watchify ./scripts/ffnn.js    \
 		 ./scripts/helpers.js \
 		 ./scripts/main.js    \
          ./scripts/logger.js  \
+         ./scripts/config.js  \
+         ./scripts/consts.js  \
+         ./scripts/prettyprint.js \
 		 -o ./scripts/bundle.js

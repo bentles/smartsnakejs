@@ -1,10 +1,17 @@
-function logger() {
-    var outputElem = document.getElementById("smartsnake-output");
+function logger(id) {
+    var outputElem = document.getElementById(id);
 
     return {
-        log : function(message) {
-            outputElem.
-                insertAdjacentHTML("beforeend", `<p id="smartsnake-message">${message}</p>`);
+        log : function(message, onclick) {
+            var elem = document.createElement('p');
+            elem.id = 'smartsnake-message';
+            elem.textContent = message;
+            if (onclick){
+                elem.style.cursor = 'pointer';
+                elem.onclick = onclick;                
+            }
+
+            outputElem.appendChild(elem);
         },
         clear : function() {
             while (outputElem.firstChild) {
@@ -14,4 +21,4 @@ function logger() {
     };
 }
 
-module.exports = logger();
+module.exports = logger;

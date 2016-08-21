@@ -1,24 +1,24 @@
 var rnorm = require('./helpers.js');
-var FFNN_builder = require('./ffnn.js');
+
 var snake_game_builder = require('./game.js');
+var config = require('./config.js');
+var _ga = config.ga;
 
 module.exports = function (self) {
     self.addEventListener('message',function (ev){
         var options = ev.data;
-        var ga = GA_builder(options.pop_size,
-                            options.tourn_percent,
-                            options.std_dev,
-                            options.mutate_chance);
+        var ga = GA_builder();
         ga.evolve(options.iter);        
     });
 
-
-    function GA_builder(pop_size, tourn_percent, std_dev, mutate_chance) {
-        var vision = 2;
-        var nnet = FFNN_builder( /*5 * 3*/ 12 * vision + 4,
-            6, function(net){return net;},
-            3, function(net){return net;});
-        var game = snake_game_builder(20, 10, 3, vision, nnet);
+    function GA_builder() {
+        var pop_size =      _ga.pop_size;
+        var tourn_percent = _ga.tourn_percent;
+        var std_dev =       _ga.std_dev;
+        var mutate_chance = _ga.mutate_chance;
+        
+        var game = snake_game_builder();
+        var nnet = game.getNetwork();
         var chromosomes = [];
         var max_fit = -Number.MAX_VALUE;
         var max_fit_chromo = [];
@@ -44,8 +44,7 @@ module.exports = function (self) {
 
             for(var i = 0; i < chromosomes.length; i++) {
                 nnet.set(chromosomes[i]);
-
-
+                
                 var score = 0;
 
                 var num_runs = 5;
@@ -60,7 +59,10 @@ module.exports = function (self) {
 
                     max_fit = fitnesses[i];
                     max_fit_chromo = chromosomes[i];
-                    self.postMessage("NEW MAX FITNESS! " + fitnesses[i]);
+                    self.postMessage({
+                        message: "NEW MAX FITNESS! " + fitnesses[i],
+                        chromo: max_fit_chromo.slice() //send back info for the UI
+                    });
                     new_max = true;
                 }
             }
@@ -145,7 +147,10 @@ module.exports = function (self) {
 
             while(next_gen() && iter--) {
                 if (iter % 100 == 0) {
-                    self.postMessage("NEW GEN (" + (totalgens - iter)  + "): " + max_fit);
+                    self.postMessage(
+                        {
+                            message:  "NEW GEN (" + (totalgens - iter)  + "): " + max_fit
+                        });
                 }
             }
             return max_fit_chromo;

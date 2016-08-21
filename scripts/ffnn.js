@@ -1,6 +1,12 @@
-function FFNN_builder(num_in,
-              num_hidden, hidden_func,
-                      num_out, out_func) {
+var _ffnn = require('./config.js').ffnn;
+
+function FFNN_builder() {
+    var num_in = _ffnn.num_in;
+    var num_hidden = _ffnn.num_hidden;
+    var hidden_func = _ffnn.hidden_func;
+    var num_out = _ffnn.num_out;
+    var out_func = _ffnn.out_func;
+    
     var inputs = [];
     var hidden_neurons = [];
     var out_neurons = [];

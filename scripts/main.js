@@ -5,23 +5,36 @@
 //var chromo = ga.evolve(500);
 
 var work = require('webworkify');
+var gameBuilder = require('./game.js');
 var gaWorker = work(require('./ga.js'));
-var logger = require('./logger.js');
+var FfnnBuilder = require('./ffnn.js');
+var loggerBuilder = require('./logger.js');
+var logger = loggerBuilder('smartsnake-output');
+var prettyPrinterBuilder = require('./prettyprint.js');
+var best_chromo;
+
+//things to use to play back the results we get
+var game = gameBuilder();
+var nnet = game.getNetwork();
 
 gaWorker.addEventListener('message', function (ev) {
-    logger.log(ev.data);
+    logger.log(ev.data.message, function() {
+        playGame(ev.data.chromo);
+    });    
 });
-
 
 //start up the ga with the following arguments
 gaWorker.postMessage(
     {
-        pop_size: 20,
-        tourn_percent: 0.5,
-        std_dev: 2.5,
-        mutate_chance: 0.01,
-        iter: 500
+        iter: 1000
     });
 
 //console.log(chromo);
-//ga.play_best(50);
+
+
+function playGame(chromo) { 
+    nnet.set(chromo);
+    game.play(100, prettyPrinterBuilder());   
+}
+
+
