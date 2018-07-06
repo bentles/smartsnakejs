@@ -17,6 +17,9 @@ function snakeGameBuilder() {
 
     //eyesight
     var SNAKEVISION = _snake.vision;
+	
+    //each time the snake gets longer increase HP by this amount
+    var LENGTHHEALTHFACTOR = 1;
 
     var board = [];
     var snake = [];
@@ -24,7 +27,7 @@ function snakeGameBuilder() {
     var direction = consts.N;
     var score = 0;
     var lived = 0;
-    var HP = _game.width * _game.height * DEATH;
+    var HP = _game.width * _game.height * DEATH + _snake.start_length * LENGTHHEALTHFACTOR;
     var time = 0;
 
     //snake can remember the last 5 things it did
@@ -159,7 +162,7 @@ function snakeGameBuilder() {
         var old_length = snake.length;
         var tail = snake[snake.length - 1];
         if (grew) {
-            var length =
+            HP += LENGTHHEALTHFACTOR;
             snake[old_length] = {};
             snake[old_length].x = tail.x;
             snake[old_length].y = tail.y;
