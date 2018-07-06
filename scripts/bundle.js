@@ -207,7 +207,7 @@ module.exports = function (self) {
         var max_fit = -Number.MAX_VALUE;
         var max_fit_chromo = [];
         var fitnesses = [];
-        var fitness_stagnation = 500;
+        var fitness_stagnation = 50000;
         var fitness_stagnation_count = fitness_stagnation;
 
         function create_first_gen() {
