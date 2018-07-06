@@ -231,7 +231,7 @@ module.exports = function (self) {
                 
                 var score = 0;
 
-                var num_runs = 5;
+                var num_runs = 10;
                 for(var j = 0; j < num_runs; j++) {
                     score += game.run();
                 }
