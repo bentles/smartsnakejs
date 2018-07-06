@@ -372,7 +372,7 @@ function snakeGameBuilder() {
     var SNAKEVISION = _snake.vision;
 	
     //each time the snake gets longer increase HP by this amount
-    var LENGTHHEALTHFACTOR = 1;
+    var LENGTHHEALTHFACTOR = 2;
 
     var board = [];
     var snake = [];
