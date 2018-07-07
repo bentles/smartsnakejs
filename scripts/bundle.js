@@ -372,7 +372,7 @@ function snakeGameBuilder() {
     var SNAKEVISION = _snake.vision;
 	
     //each time the snake gets longer increase HP by this amount
-    var LENGTHHEALTHFACTOR = 2;
+    var LENGTHHEALTHFACTOR = 1;
 
     var board = [];
     var snake = [];
@@ -514,8 +514,7 @@ function snakeGameBuilder() {
         var grew = entity_map[get_id(snake[0].x + offset.x, snake[0].y + offset.y)] === consts.APPLE ;
         var old_length = snake.length;
         var tail = snake[snake.length - 1];
-        if (grew) {
-            HP += LENGTHHEALTHFACTOR;
+        if (grew) {            
             snake[old_length] = {};
             snake[old_length].x = tail.x;
             snake[old_length].y = tail.y;
@@ -660,7 +659,7 @@ function snakeGameBuilder() {
         if(grew) {
             inc_score();
             apple_pos = add_apple();
-            HP = _game.width * _game.height * DEATH;
+            HP = _game.width * _game.height * DEATH + snake.length * LENGTHHEALTHFACTOR;
         }
         HP--;
         time++;
